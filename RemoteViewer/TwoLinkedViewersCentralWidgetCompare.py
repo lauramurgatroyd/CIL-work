@@ -15,30 +15,29 @@ import glob, sys, os
 from functools import partial
 import posixpath, ntpath
 import posixpath as dpath
-from dvc_x.ui import RemoteFileDialog
-from dvc_x.ui import RemoteServerSettingDialog
-import dvc_x as drx
+from brem.ui import RemoteFileDialog
+from brem.ui import RemoteServerSettingDialog
+import brem as drx
 from eqt.threading import Worker
 from eqt.ui import FormDialog, UIFormFactory
 import tempfile
-
 
 
 class SingleViewerCenterWidget(QtWidgets.QMainWindow):
 
     def __init__(self, parent = None):
         QtWidgets.QMainWindow.__init__(self, parent)
-        #self.resize(800,600)
+        # self.resize(800,600)
         self._tmpdir = None
         self._menus = {}
 
         self.SetUpMenus()
 
-        self.frame = QCILViewerWidget(viewer=viewer2D, 
-                                      shape=(600,600),
+        self.frame = QCILViewerWidget(viewer=viewer2D,
+                                      shape=(600, 600),
                                       interactorStyle=vlink.Linked2DInteractorStyle)
-        self.frame1 = QCILViewerWidget(viewer=viewer3D, 
-                                       shape=(600,600),
+        self.frame1 = QCILViewerWidget(viewer=viewer3D,
+                                       shape=(600, 600),
                                        interactorStyle=vlink.Linked3DInteractorStyle)
         layout = QtWidgets.QHBoxLayout(self)
         layout.addWidget(self.frame)
@@ -47,8 +46,9 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
         widget.setLayout(layout)
         # self.setCentralWidget(self.frame)
         self.setCentralWidget(widget)
-    
+
         self.show()
+
     @property
     def tempdir(self):
         if self._tmpdir is None: 
@@ -63,6 +63,7 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
     def SetUpMenus(self):
         self.SetUpFileMenu()
         self.SetUpViewMenu()
+
     def SetUpViewMenu(self):
         viewMenu = self.menuBar().addMenu("View")
 
@@ -78,10 +79,8 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
 
         selectFile = QtWidgets.QAction('Select File', parent=self)
         
-        
         selectRemoteFile = QtWidgets.QAction('Select Remote File', parent=self)
         selectRemoteFile.triggered.connect(lambda: self.browseRemote())
-        
         
         configureRemote = QtWidgets.QAction('Configure Remote', parent=self)
         configureRemote.triggered.connect(self.openConfigRemote)
@@ -89,9 +88,6 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
         quit = QtWidgets.QAction('Quit', parent=self)
         quit.triggered.connect(self.CleanUpAndClose)
 
-
-
-        
         fileMenu.addAction(selectFile)
         fileMenu.addAction(selectRemoteFile)
         fileMenu.addSeparator()
@@ -145,6 +141,7 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
                 except:
                     pass
             dialog.exec()
+
     def getSelected(self, dialog):
         if hasattr(dialog, 'selected'):
             print (type(dialog.selected))
@@ -163,9 +160,9 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
             port = self.connection_details['server_port']
             host = self.connection_details['server_name']
             private_key = self.connection_details['private_key']
-            
-            self.asyncCopy.setRemoteConnectionSettings(username=username, 
-                                        port=port, host=host, private_key=private_key)
+
+            self.asyncCopy.setRemoteConnectionSettings(username=username,
+                                                       port=port, host=host, private_key=private_key)
             self.asyncCopy.SetRemoteFileName(dirname=self.files_to_get[0][0], filename=self.files_to_get[0][1])
             self.asyncCopy.SetDestinationDir(os.path.abspath(self.tempdir.name))
             self.asyncCopy.signals.finished.connect(lambda: self.visualise())
@@ -177,10 +174,11 @@ class SingleViewerCenterWidget(QtWidgets.QMainWindow):
         if os.path.exists(f):
             print("YEEEE")
 
-            reader = vtk.vtkNIFTIImageReader()
+            #reader = vtk.vtkNIFTIImageReader()
+            reader = vtk.vtkMetaImageReader()
             reader.SetFileName(f)
             reader.Update()
-            
+
             self.frame.viewer.setInputData(reader.GetOutput())
             self.frame1.viewer.setInputData(reader.GetOutput())
         else:
@@ -318,8 +316,9 @@ class AsyncCopyFromSSH(object):
             
             
             from time import sleep
-            
-            a=drx.DVCRem(host=host,username=username,port=22,private_key=private_key)
+
+            a = drx.BasicRemoteExecutionManager(host=host, username=username,
+                           port=22, private_key=private_key)
 
             a.login(passphrase=False)
             
@@ -342,7 +341,6 @@ class AsyncCopyFromSSH(object):
             if progress_callback is not None:
                 progress_callback.emit(100)
             
-        
     def GetFile(self):
         self.threadpool.start(self.worker)
 
